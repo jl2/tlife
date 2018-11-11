@@ -1,0 +1,14 @@
+* tlife
+** About
+This is an interactive library for exploring different versions of Conway's Game of Life.
+
+** License
+ISC
+
+Copyright (c) 2018 Jeremiah LaRocco <jeremiah_larocco@fastmail.com>
+
+
+** Project Roadmap
+*** TODO Add an OpenGL viewer using clgl
+*** TODO Implement "toroid" life
+
