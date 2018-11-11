@@ -23,9 +23,9 @@
 (defclass text-renderer (renderer)
   ((stream :initform *standard-output* :initarg :stream)))
 
-(defclass gl-renderer (renderer)
+(defclass 2d-gl-renderer (renderer)
   ((viewer :type clgl:viewer :initform (make-instance 'clgl:viewer :viewport (make-instance 'clgl:2d-viewport)))
-   (blocks :type clgl:primitives :initform (make-instance 'clgl:primitives))))
+   (blocks :type (or null clgl:primitives) :initform nil)))
 
 (defclass game-of-life ()
   ((width :type fixnum)
@@ -163,12 +163,6 @@
         (setf cur-idx nl))))
   game)
 
-;; (defmethod iterate ((game toroid-life) &key (steps 1))
-;;   (with-slots (grid height width cur-idx) game
-;;     )
-;;   game)
-
-
 (defmethod render ((game conways-game-of-life) (renderer text-renderer) &key &allow-other-keys)
   (with-slots (width height grid cur-idx) game
     (with-slots (stream) renderer
@@ -181,24 +175,19 @@
           (format stream fs "")))))
   game)
 
-(defmethod render ((game conways-game-of-life) (renderer gl-renderer) &key &allow-other-keys)
+(defmethod render ((game conways-game-of-life) (renderer 2d-gl-renderer) &key &allow-other-keys)
   (with-slots (viewer blocks) renderer
-    (clgl:add-object viewer 'axis (clgl:make-2d-axis))
+    (setf blocks (make-instance 'clgl:primitives))
     (with-slots (width height grid cur-idx) game
       (dotimes (i height)
         (dotimes (j width)
           (when (aref grid i j cur-idx)
-            (clgl:add-box blocks
+            (clgl:add-filled-quad blocks
                           (vec4 0.0 0.8 0.0 1.0)
                           (vec3 i j 0)
                           (vec3 (1+ i) j 0)
                           (vec3 (1+ i) (1+ j) 0)
-                          (vec3 i (1+ j) 0)
-                          (vec3 i j 0)
-                          (vec3 (1+ i) j 0)
-                          (vec3 (1+ i) (1+ j) 0)
-                          (vec3 i (1+ j) 0)
-                          t )))))
+                          (vec3 i (1+ j) 0))))))
     (clgl:add-object viewer 'life blocks)
     (clgl:show-viewer viewer nil)
     viewer))
@@ -215,7 +204,7 @@
   game)
 
 
-(defun spinner-test (steps)
+(defun spinner-test (&key (steps 5))
   (let ((game (make-instance 'tlife:conways-game-of-life :width 5 :height 5 ))
         (rend (make-instance 'tlife:text-renderer)))
     (tlife:clear game)
@@ -228,7 +217,7 @@
       (tlife:render game rend))
     game))
 
-(defun box-test (steps)
+(defun box-test (&key (steps 4))
   (let ((game (make-instance 'tlife:conways-game-of-life :width 4 :height 4 ))
         (rend (make-instance 'tlife:text-renderer)))
     (tlife:clear game)
@@ -242,7 +231,7 @@
       (tlife:render game rend))
     game))
 
-(defun glider-test (steps)
+(defun glider-test (&key (width 6) (height 6) (steps 24))
   (let ((game (make-instance 'tlife:conways-game-of-life :width 6 :height 6 ))
         (rend (make-instance 'tlife:text-renderer)))
     (tlife:clear game)
