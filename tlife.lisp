@@ -105,35 +105,39 @@
     (setf (aref grid y x cur-idx) value))
   game)
 
-(defmethod set-value ((game conways-game-of-life) value &key (x) (y) (z))
+(defmethod set-value ((game toroid-life) value &key (x) (y) (z))
   (with-slots (grid cur-idx) game
     (setf (aref grid y x z) value))
   game)
 
-(defun count-neighbors ((game game-of-life) i j k)
-  "Count the neighbors of grid location i,j"
-  (let ((ip (if (= 0 i)
-                (1- height)
-                (1- i)))
-        (jp (if (= 0 j)
-                (1- width)
-                (1- j)))
-        (in (if (>= i (1- width))
-                0
-                (1+ i)))
-        (jn (if (>= j (1- height))
-                0
-                (1+ j)))
-        (count 0))
-    (when (aref grid ip jp cl) (incf count))
-    (when (aref grid ip  j cl) (incf count))
-    (when (aref grid ip jn cl) (incf count))
-    (when (aref grid  i jp cl) (incf count))
-    (when (aref grid  i jn cl) (incf count))
-    (when (aref grid in jp cl) (incf count))
-    (when (aref grid in  j cl) (incf count))
-    (when (aref grid in jn cl) (incf count))
-    count))
+(defgeneric count-neighbors (game i j k)
+  (:documentation "Count neighbors at location i j k"))
+
+(defmethod count-neighbors ((game game-of-life) i j k)
+  (with-slots (width height grid) game
+    "Count the neighbors of grid location i j k"
+    (let ((ip (if (= 0 i)
+                  (1- height)
+                  (1- i)))
+          (jp (if (= 0 j)
+                  (1- width)
+                  (1- j)))
+          (in (if (>= i (1- width))
+                  0
+                  (1+ i)))
+          (jn (if (>= j (1- height))
+                  0
+                  (1+ j)))
+          (count 0))
+      (when (aref grid ip jp k) (incf count))
+      (when (aref grid ip  j k) (incf count))
+      (when (aref grid ip jn k) (incf count))
+      (when (aref grid  i jp k) (incf count))
+      (when (aref grid  i jn k) (incf count))
+      (when (aref grid in jp k) (incf count))
+      (when (aref grid in  j k) (incf count))
+      (when (aref grid in jn k) (incf count))
+      count)))
 
 (defmethod iterate ((game conways-game-of-life) &key (steps 1))
   (with-slots (grid height width cur-idx) game
@@ -142,7 +146,7 @@
       (let ((nl (if (= cur-idx 0) 1 0)))
         (loop for i from 0 below height do
              (loop for j from 0 below width do
-                  (let ((nc (count-neighbors i j cur-idx)))
+                  (let ((nc (count-neighbors game i j cur-idx)))
                     (cond ((and (aref grid i j cur-idx) (< nc 2))
                            (setf (aref grid i j nl) nil))
                           
@@ -156,13 +160,13 @@
                            (setf (aref grid i j nl) t))
                           (t
                            (setf (aref grid i j nl) nil))))))
-        (setf cur-idx nl)))))
+        (setf cur-idx nl))))
   game)
 
-(defmethod iterate ((game toroid-life) &key (steps 1))
-  (with-slots (grid height width cur-idx) game
-    )
-  game)
+;; (defmethod iterate ((game toroid-life) &key (steps 1))
+;;   (with-slots (grid height width cur-idx) game
+;;     )
+;;   game)
 
 
 (defmethod render ((game conways-game-of-life) (renderer text-renderer) &key &allow-other-keys)
@@ -179,23 +183,25 @@
 
 (defmethod render ((game conways-game-of-life) (renderer gl-renderer) &key &allow-other-keys)
   (with-slots (viewer blocks) renderer
-    (add-object viewer 'axis (clgl:make-2d-axis))
+    (clgl:add-object viewer 'axis (clgl:make-2d-axis))
     (with-slots (width height grid cur-idx) game
       (dotimes (i height)
         (dotimes (j width)
           (when (aref grid i j cur-idx)
-            (clgl:add-box (vec3 i j 0)
+            (clgl:add-box blocks
+                          (vec4 0.0 0.8 0.0 1.0)
+                          (vec3 i j 0)
                           (vec3 (1+ i) j 0)
-                          (vec3 (1+ i) (1+ j) 0))
-          (format stream "|~a" (if  "X" " ")))
-        (format stream "|")
-        (format stream fs ""))))
-
-    (show-viewer viewer in-thread)
+                          (vec3 (1+ i) (1+ j) 0)
+                          (vec3 i (1+ j) 0)
+                          (vec3 i j 0)
+                          (vec3 (1+ i) j 0)
+                          (vec3 (1+ i) (1+ j) 0)
+                          (vec3 i (1+ j) 0)
+                          t )))))
+    (clgl:add-object viewer 'life blocks)
+    (clgl:show-viewer viewer nil)
     viewer))
-
-)
-  game)
 
 (defmethod initialize ((game toroid-life) &key (probability 0.45) &allow-other-keys)
   (with-slots (width height depth grid cur-idx) game

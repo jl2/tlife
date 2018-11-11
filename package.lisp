@@ -16,14 +16,14 @@
 ;; OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 (defpackage :tlife
-  (:use #:cl #:j-utils #:alexandria)
+  (:use #:cl #:j-utils #:alexandria #:3d-vectors)
   (:export #:conways-game-of-life
            #:toroid-life
            #:text-renderer
            #:iterate
            #:initialize
            #:clear
-           #:set-valueb
+           #:set-value
            #:render
            #:gl-renderer
            #:spinner-test
