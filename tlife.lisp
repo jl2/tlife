@@ -17,153 +17,187 @@
 
 (in-package :tlife)
 
-(defclass renderer () ())
-
-(defmethod add-quad (renderer pt1 pt2 pt3 pt4)
-  "Draw a quad.")
-
-(defmethod add-cell (renderer
-                     pt1 pt2 pt3 pt4
-                     pt5 pt6 pt7 pt8)
-  "Draw a 3D cell.")
+(defclass renderer ()
+  ())
 
 (defclass text-renderer (renderer)
   ((stream :initform *standard-output* :initarg :stream)))
 
-(defclass life-game ()
-  ())
+(defclass gl-renderer (renderer)
+  ((viewer :type clgl:viewer :initform (make-instance 'clgl:viewer :viewport (make-instance 'clgl:2d-viewport)))
+   (blocks :type clgl:primitives :initform (make-instance 'clgl:primitives))))
 
-(defclass conways-life-game (life-game)
-  ((width :initform 10 :initarg :width)
-   (height :initform 10 :initarg :height)
-   (grid :initform nil :type (or null (simple-array boolean (* * 2))))
-   (initial-probability :initform 0.5 :initarg prob :type double-float)
-   (current-level :initform 0)))
+(defclass game-of-life ()
+  ((width :type fixnum)
+   (height :type fixnum)
+   (depth :type fixnum)
+   (grid :initform nil :type (or null (simple-array boolean (* * *))))
+   (cur-idx :initform 0 :type fixnum)))
 
-(defmethod print-object ((object conways-life-game) stream)
+(defclass conways-game-of-life (game-of-life)
+  ((width :type fixnum :initform 10 :initarg :width)
+   (height :type fixnum :initform 10 :initarg :height)
+   (depth :type fixnum :initform 2 :initarg :depth)))
+
+(defclass toroid-life (game-of-life)
+  ((width :type fixnum :initform 10 :initarg :width)
+   (height :type fixnum :initform 10 :initarg :height)
+   (depth :type fixnum :initform 200 :initarg :depth)
+   (rotate :type fixnum :initform 0 :initarg :rotate)))
+
+(defmethod print-object ((object game-of-life) stream)
   (format stream "Grid:~%")
-  (with-slots (width height grid current-level initial-probability) object
-    (loop for idx below 2 do
+  (with-slots (width height depth grid cur-idx) object
+    (loop for idx below depth do
          (format stream "  Level: ~a~%" idx)
          (loop for i below height do
               (format stream "    ")
               (loop for j below width do
                    (format stream "~a" (if (aref grid i j idx) "X" " ")))
               (format stream "~%")))
-    (format stream "current-level: ~a~%" current-level)
-    (format stream "initial-probability: ~a~%" initial-probability)))
+    (format stream "cur-idx: ~a~%" cur-idx)))
 
-(defclass toroid-life (life-game)
-  ((width :initform 10 :initarg :width :type fixnum)
-   (height :initform 10 :initarg :height :type fixnum)
-   (depth :initform 200 :initarg :depth :type fixnum)
-   (grid :initform nil :type (or null (simple-array boolean (* * *))))
-   (cur-idx :initform 0 :type fixnum)))
+(defgeneric clear (game)
+  (:documentation "Empty grid."))
 
-
-(defgeneric initialize (game)
+(defgeneric initialize (game &key probability &allow-other-keys)
   (:documentation "Render the current game state using the supplied renderer."))
 
-(defgeneric render (game renderer)
+(defgeneric render (game renderer &key &allow-other-keys)
   (:documentation "Render the current game state using the supplied renderer."))
 
 (defgeneric iterate (game &key steps)
   (:documentation "Advance the game by the specified number of steps."))
 
-(defgeneric clear (game)
-  (:documentation "Empty grid."))
-
 (defgeneric set-value (game value &key &allow-other-keys)
   (:documentation "Set grid at location to specified value."))
 
-(defmethod clear ((game conways-life-game))
-  (with-slots (width height grid current-level) game
-    (setf current-level 0)
+(defmethod clear ((game game-of-life))
+  (with-slots (width height depth grid cur-idx) game
+    (setf cur-idx 0)
     (when (not grid)
-      (setf grid (make-array (list width height 2) :element-type 'boolean :initial-element nil)))
-    (loop for i below height do
-         (loop for j below width do
-              (setf (aref grid i j 0) nil)
-              (setf (aref grid i j 1) nil)))))
+      (setf grid (make-array (list width height depth) :element-type 'boolean :initial-element nil)))
+    (loop for k below depth do
+         (loop for i below height do
+              (loop for j below width do
+                   (setf (aref grid i j k) nil))))))
 
-(defmethod initialize ((game conways-life-game))
+(defmethod initialize ((game game-of-life) &key (probability 0.45))
   (clear game)
-  (with-slots (width height grid current-level initial-probability) game
+  (with-slots (width height grid cur-idx) game
     (loop for i below height do
          (loop for j below width do
-              (setf (aref grid i j 0) (< (random 1.0) initial-probability))
-              (setf (aref grid i j 1) nil)))
-    (setf current-level 0))
+              (setf (aref grid i j 0) (< (random 1.0) probability))))
+    (setf cur-idx 0))
   game)
 
-(defmethod set-value ((game conways-life-game) value &key (x) (y))
-  (with-slots (grid current-level) game
-    (setf (aref grid y x current-level) value))
+(defmethod initialize ((game game-of-life) &key (probability 0.45))
+  (clear game)
+  (with-slots (width height grid cur-idx) game
+    (loop for i below height do
+         (loop for j below width do
+              (setf (aref grid i j 0) (< (random 1.0) probability))))
+    (setf cur-idx 0))
   game)
 
-(defmethod iterate ((game conways-life-game) &key (steps 1))
-  (with-slots (grid height width current-level) game
-    (flet ((count-neighbors (i j cl)
-             "Count the neighbors of grid location i,j"
-             (let ((ip (if (= 0 i)
-                           (1- height)
-                           (1- i)))
-                   (jp (if (= 0 j)
-                           (1- width)
-                           (1- j)))
-                   (in (if (>= i (1- width))
-                           0
-                           (1+ i)))
-                   (jn (if (>= j (1- height))
-                           0
-                           (1+ j)))
-                   (count 0))
-               (when (aref grid ip jp cl) (incf count))
-               (when (aref grid ip  j cl) (incf count))
-               (when (aref grid ip jn cl) (incf count))
-               (when (aref grid  i jp cl) (incf count))
-               (when (aref grid  i jn cl) (incf count))
-               (when (aref grid in jp cl) (incf count))
-               (when (aref grid in  j cl) (incf count))
-               (when (aref grid in jn cl) (incf count))
-               ;;(format t "Neighbors: ~a~%" count)
-               count)))
-      (dotimes (cs steps)
-        (declare (ignorable cs))
-        (let ((nl (if (= current-level 0) 1 0)))
-          (loop for i from 0 below height do
-               (loop for j from 0 below width do
-                    (let ((nc (count-neighbors i j current-level)))
-                      (cond ((and (aref grid i j current-level) (< nc 2))
-                             (setf (aref grid i j nl) nil))
-                            
-                            ((and (aref grid i j current-level) (or (= nc 2) (= nc 3)))
-                             (setf (aref grid i j nl) t))
-                            
-                            ((and (aref grid i j current-level) (> nc 3))
-                             (setf (aref grid i j nl) nil))
-
-                            ((and (not (aref grid i j current-level)) (= 3 nc))
-                             (setf (aref grid i j nl) t))
-                            (t
-                             (setf (aref grid i j nl) nil))))))
-          (setf current-level nl)))))
+(defmethod set-value ((game conways-game-of-life) value &key (x) (y))
+  (with-slots (grid cur-idx) game
+    (setf (aref grid y x cur-idx) value))
   game)
 
-(defmethod render ((game conways-life-game) (renderer text-renderer))
-  (with-slots (width height grid current-level) game
+(defmethod set-value ((game conways-game-of-life) value &key (x) (y) (z))
+  (with-slots (grid cur-idx) game
+    (setf (aref grid y x z) value))
+  game)
+
+(defun count-neighbors ((game game-of-life) i j k)
+  "Count the neighbors of grid location i,j"
+  (let ((ip (if (= 0 i)
+                (1- height)
+                (1- i)))
+        (jp (if (= 0 j)
+                (1- width)
+                (1- j)))
+        (in (if (>= i (1- width))
+                0
+                (1+ i)))
+        (jn (if (>= j (1- height))
+                0
+                (1+ j)))
+        (count 0))
+    (when (aref grid ip jp cl) (incf count))
+    (when (aref grid ip  j cl) (incf count))
+    (when (aref grid ip jn cl) (incf count))
+    (when (aref grid  i jp cl) (incf count))
+    (when (aref grid  i jn cl) (incf count))
+    (when (aref grid in jp cl) (incf count))
+    (when (aref grid in  j cl) (incf count))
+    (when (aref grid in jn cl) (incf count))
+    count))
+
+(defmethod iterate ((game conways-game-of-life) &key (steps 1))
+  (with-slots (grid height width cur-idx) game
+    (dotimes (cs steps)
+      (declare (ignorable cs))
+      (let ((nl (if (= cur-idx 0) 1 0)))
+        (loop for i from 0 below height do
+             (loop for j from 0 below width do
+                  (let ((nc (count-neighbors i j cur-idx)))
+                    (cond ((and (aref grid i j cur-idx) (< nc 2))
+                           (setf (aref grid i j nl) nil))
+                          
+                          ((and (aref grid i j cur-idx) (or (= nc 2) (= nc 3)))
+                           (setf (aref grid i j nl) t))
+                          
+                          ((and (aref grid i j cur-idx) (> nc 3))
+                           (setf (aref grid i j nl) nil))
+
+                          ((and (not (aref grid i j cur-idx)) (= 3 nc))
+                           (setf (aref grid i j nl) t))
+                          (t
+                           (setf (aref grid i j nl) nil))))))
+        (setf cur-idx nl)))))
+  game)
+
+(defmethod iterate ((game toroid-life) &key (steps 1))
+  (with-slots (grid height width cur-idx) game
+    )
+  game)
+
+
+(defmethod render ((game conways-game-of-life) (renderer text-renderer) &key &allow-other-keys)
+  (with-slots (width height grid cur-idx) game
     (with-slots (stream) renderer
       (let ((fs (format nil "~~%~~~a,,,'-a~~%" (1+(* 2 width)))))
         (format stream fs "")
         (dotimes (i height)
           (dotimes (j width)
-            (format stream "|~a" (if (aref grid i j current-level) "X" " ")))
+            (format stream "|~a" (if (aref grid i j cur-idx) "X" " ")))
           (format stream "|")
           (format stream fs "")))))
   game)
-  
 
-(defmethod initialize ((game toroid-life))
+(defmethod render ((game conways-game-of-life) (renderer gl-renderer) &key &allow-other-keys)
+  (with-slots (viewer blocks) renderer
+    (add-object viewer 'axis (clgl:make-2d-axis))
+    (with-slots (width height grid cur-idx) game
+      (dotimes (i height)
+        (dotimes (j width)
+          (when (aref grid i j cur-idx)
+            (clgl:add-box (vec3 i j 0)
+                          (vec3 (1+ i) j 0)
+                          (vec3 (1+ i) (1+ j) 0))
+          (format stream "|~a" (if  "X" " ")))
+        (format stream "|")
+        (format stream fs ""))))
+
+    (show-viewer viewer in-thread)
+    viewer))
+
+)
+  game)
+
+(defmethod initialize ((game toroid-life) &key (probability 0.45) &allow-other-keys)
   (with-slots (width height depth grid cur-idx) game
     (if (not grid)
         (setf grid (make-array (list width height depth) :element-type 'boolean :initial-element nil))
@@ -174,19 +208,9 @@
     (setf cur-idx 0))
   game)
 
-(defmethod view-key-press ((viewer gl-renderer) key scancode action mod-keys)
-  (declare (ignorable key scancode action mod-keys))
-  (clgl:with-viewer-lock (viewer)
-    (format t "Got key: ~a in clgl:viewer:view-key-press~%" (list key scancode action mod-keys))
-    (with-slots (last-mouse-position first-click-position objects to-cleanup geometry-modified should-close viewport) viewer
-      (cond ((and (eq key :escape) (eq action :press) first-click-position)
-             (setf first-click-position nil)
-             (setf last-mouse-position nil))
-            ((and (eq key :escape) (eq action :press))
-             (glfw:set-window-should-close))))))
 
 (defun spinner-test (steps)
-  (let ((game (make-instance 'tlife:conways-life-game :width 5 :height 5 ))
+  (let ((game (make-instance 'tlife:conways-game-of-life :width 5 :height 5 ))
         (rend (make-instance 'tlife:text-renderer)))
     (tlife:clear game)
     (tlife:set-value game t :x 2 :y 1)
@@ -199,7 +223,7 @@
     game))
 
 (defun box-test (steps)
-  (let ((game (make-instance 'tlife:conways-life-game :width 4 :height 4 ))
+  (let ((game (make-instance 'tlife:conways-game-of-life :width 4 :height 4 ))
         (rend (make-instance 'tlife:text-renderer)))
     (tlife:clear game)
     (tlife:set-value game t :x 1 :y 1)
@@ -213,7 +237,7 @@
     game))
 
 (defun glider-test (steps)
-  (let ((game (make-instance 'tlife:conways-life-game :width 6 :height 6 ))
+  (let ((game (make-instance 'tlife:conways-game-of-life :width 6 :height 6 ))
         (rend (make-instance 'tlife:text-renderer)))
     (tlife:clear game)
     (tlife:set-value game t :x 2 :y 0)
@@ -226,3 +250,5 @@
       (tlife:iterate game)
       (tlife:render game rend))
     game))
+
+

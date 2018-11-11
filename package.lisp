@@ -17,7 +17,7 @@
 
 (defpackage :tlife
   (:use #:cl #:j-utils #:alexandria)
-  (:export #:conways-life-game
+  (:export #:conways-game-of-life
            #:toroid-life
            #:text-renderer
            #:iterate
