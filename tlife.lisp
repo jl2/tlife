@@ -182,19 +182,26 @@
           (format stream fs "")))))
   game)
 
-(defmethod render ((game conways-game-of-life) (renderer gl-renderer) &key (show nil) &allow-other-keys)
+(defmethod render ((game conways-game-of-life) (renderer gl-renderer) &key (show nil) (fill nil) &allow-other-keys)
   (with-slots (viewer) renderer
     (let ((blocks (make-instance 'clgl:primitives)))
       (with-slots (width height grid cur-idx) game
         (dotimes (i height)
           (dotimes (j width)
             (when (aref grid j i cur-idx)
-              (clgl:add-wire-quad blocks
-                                    (vec4 0.0 0.8 0.0 1.0)
-                                    (vec3 j i 0)
-                                    (vec3 j (1+ i) 0)
-                                    (vec3 (1+ j) (1+ i) 0)
-                                    (vec3 (1+ j) i 0))))))
+              (if fill
+                  (clgl:add-filled-quad blocks
+                                        (vec4 0.0 0.8 0.0 1.0)
+                                        (vec3 j i 0)
+                                        (vec3 j (1+ i) 0)
+                                        (vec3 (1+ j) (1+ i) 0)
+                                        (vec3 (1+ j) i 0))
+                  (clgl:add-wire-quad blocks
+                                        (vec4 0.0 0.8 0.0 1.0)
+                                        (vec3 j i 0)
+                                        (vec3 j (1+ i) 0)
+                                        (vec3 (1+ j) (1+ i) 0)
+                                        (vec3 (1+ j) i 0)))))))
     (clgl:add-object viewer 'life blocks)
     (when show (clgl:show-viewer viewer nil))
     viewer)))
@@ -239,7 +246,7 @@
     game))
 
 (defun glider-test (&key (width 6) (height 6) (steps 24))
-  (let ((game (make-instance 'tlife:conways-game-of-life :width 6 :height 6 ))
+  (let ((game (make-instance 'tlife:conways-game-of-life :width width :height height ))
         (rend (make-instance 'tlife:text-renderer)))
     (tlife:clear game)
     (tlife:set-value game t :x 2 :y 0)
