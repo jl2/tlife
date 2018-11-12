@@ -188,13 +188,13 @@
       (with-slots (width height grid cur-idx) game
         (dotimes (i height)
           (dotimes (j width)
-            (when (aref grid i j cur-idx)
+            (when (aref grid j i cur-idx)
               (clgl:add-wire-quad blocks
                                     (vec4 0.0 0.8 0.0 1.0)
-                                    (vec3 i j 0)
-                                    (vec3 (1+ i) j 0)
-                                    (vec3 (1+ i) (1+ j) 0)
-                                    (vec3 i (1+ j) 0))))))
+                                    (vec3 j i 0)
+                                    (vec3 j (1+ i) 0)
+                                    (vec3 (1+ j) (1+ i) 0)
+                                    (vec3 (1+ j) i 0))))))
     (clgl:add-object viewer 'life blocks)
     (when show (clgl:show-viewer viewer nil))
     viewer)))
