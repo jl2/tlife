@@ -23,9 +23,16 @@
 (defclass text-renderer (renderer)
   ((stream :initform *standard-output* :initarg :stream)))
 
-(defclass 2d-gl-renderer (renderer)
+(defclass gl-renderer (renderer)
+  ((viewer :type clgl:viewer :initarg :viewer)))
+
+(defclass 2d-gl-renderer (gl-renderer)
   ((viewer :type clgl:viewer :initform (make-instance 'clgl:viewer :viewport (make-instance 'clgl:2d-viewport)))
-   (blocks :type (or null clgl:primitives) :initform nil)))
+   ;;(blocks :type (or null clgl:primitives) :initform nil)
+   ))
+
+(defclass 3d-gl-renderer (gl-renderer)
+  ((viewer :type clgl:viewer :initform (make-instance 'clgl:viewer :viewport (make-instance 'clgl:rotating-viewport)))))
 
 (defclass game-of-life ()
   ((width :type fixnum)
@@ -175,22 +182,22 @@
           (format stream fs "")))))
   game)
 
-(defmethod render ((game conways-game-of-life) (renderer 2d-gl-renderer) &key &allow-other-keys)
-  (with-slots (viewer blocks) renderer
-    (setf blocks (make-instance 'clgl:primitives))
-    (with-slots (width height grid cur-idx) game
-      (dotimes (i height)
-        (dotimes (j width)
-          (when (aref grid i j cur-idx)
-            (clgl:add-filled-quad blocks
-                          (vec4 0.0 0.8 0.0 1.0)
-                          (vec3 i j 0)
-                          (vec3 (1+ i) j 0)
-                          (vec3 (1+ i) (1+ j) 0)
-                          (vec3 i (1+ j) 0))))))
+(defmethod render ((game conways-game-of-life) (renderer gl-renderer) &key (show nil) &allow-other-keys)
+  (with-slots (viewer) renderer
+    (let ((blocks (make-instance 'clgl:primitives)))
+      (with-slots (width height grid cur-idx) game
+        (dotimes (i height)
+          (dotimes (j width)
+            (when (aref grid i j cur-idx)
+              (clgl:add-wire-quad blocks
+                                    (vec4 0.0 0.8 0.0 1.0)
+                                    (vec3 i j 0)
+                                    (vec3 (1+ i) j 0)
+                                    (vec3 (1+ i) (1+ j) 0)
+                                    (vec3 i (1+ j) 0))))))
     (clgl:add-object viewer 'life blocks)
-    (clgl:show-viewer viewer nil)
-    viewer))
+    (when show (clgl:show-viewer viewer nil))
+    viewer)))
 
 (defmethod initialize ((game toroid-life) &key (probability 0.45) &allow-other-keys)
   (with-slots (width height depth grid cur-idx) game

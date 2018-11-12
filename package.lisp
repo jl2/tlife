@@ -25,6 +25,7 @@
            #:clear
            #:set-value
            #:render
+           #:gl-renderer
            #:2d-gl-renderer
            #:3d-gl-renderer
            #:spinner-test
