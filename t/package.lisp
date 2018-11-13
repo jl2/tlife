@@ -27,5 +27,29 @@
 (def-suite :tlife)
 (in-suite :tlife)
 
-(test hello
-  (is-true (hello)))
+(test spinner
+  (let ((spinner (tlife:create-spinner))
+        (rend (make-instance 'tlife:text-renderer)))
+    (tlife:render spinner rend)
+    (dotimes (s 5)
+      (tlife:iterate spinner)
+      (tlife:render spinner rend))
+    (is (equalp spinner (tlife:create-spinner)))))
+
+(test box
+  (let ((box (tlife:create-box))
+        (rend (make-instance 'tlife:text-renderer)))
+    (tlife:render box rend)
+    (dotimes (s 4)
+      (tlife:iterate box)
+      (tlife:render box rend))
+    (is (equalp box (tlife:create-box)))))
+
+(test glider
+  (let ((glider (tlife:create-glider))
+        (rend (make-instance 'tlife:text-renderer)))
+    (tlife:render glider rend)
+    (dotimes (s 24)
+      (tlife:iterate glider)
+      (tlife:render glider rend))
+    (is (equalp glider (tlife:create-glider)))))

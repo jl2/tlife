@@ -1,4 +1,4 @@
-;;;; package.lisp 
+;;;; renderers.lisp 
 ;;
 ;; Copyright (c) 2018 Jeremiah LaRocco <jeremiah_larocco@fastmail.com>
 
@@ -15,28 +15,20 @@
 ;; ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 ;; OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
-(defpackage :tlife
-  (:use #:cl #:j-utils #:alexandria #:3d-vectors)
-  (:export
-   ;; Rendering
-   #:render
-   #:text-renderer
-   #:gl-renderer
-   #:2d-gl-renderer
-   #:3d-gl-renderer
+(in-package :tlife)
 
-   ;; From game-of-life
-   #:clear
-   #:initialize
-   #:iterate
-   #:set-value
+(defclass renderer ()
+  ())
 
-   ;; Conway's game of life
-   #:conways-game-of-life
-   #:create-spinner
-   #:create-box
-   #:create-glider
+(defclass text-renderer (renderer)
+  ((stream :initform *standard-output* :initarg :stream)))
 
-   ;; Toroid
-   #:toroid-life
-   ))
+(defclass gl-renderer (renderer)
+  ((viewer :type clgl:viewer :initarg :viewer)))
+
+(defclass 2d-gl-renderer (gl-renderer)
+  ((viewer :type clgl:viewer :initform (make-instance 'clgl:viewer :viewport (make-instance 'clgl:2d-viewport)))))
+
+(defclass 3d-gl-renderer (gl-renderer)
+  ((viewer :type clgl:viewer :initform (make-instance 'clgl:viewer :viewport (make-instance 'clgl:rotating-viewport)))))
+

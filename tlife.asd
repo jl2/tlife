@@ -22,6 +22,12 @@
   :version "0.0.1"
   :serial t
   :depends-on (#:clgl #:alexandria #:cl-glfw3 #:cl-opengl #:bordeaux-threads #:trivial-main-thread #:3d-vectors #:3d-matrices)
-  :components ((:file "package")
-               (:file "tlife"))
+  :components (
+               (:file "package")
+               (:file "tlife")
+               (:file "render")
+               (:file "game-of-life")
+               (:file "conways-game-of-life")
+               (:file "toroid-life")
+               )
   :in-order-to ((test-op (test-op tlife.test))))
