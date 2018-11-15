@@ -32,3 +32,32 @@
 (defclass 3d-gl-renderer (gl-renderer)
   ((viewer :type clgl:viewer :initform (make-instance 'clgl:viewer :viewport (make-instance 'clgl:rotating-viewport)))))
 
+(defclass renderman-renderer (gl-renderer)
+  ())
+
+;; (defmethod render ((game game-of-life) (renderer renderman-renderer)
+;;                    &key
+;;                      (rib-name "life.rib")
+;;                    &allow-other-keys)
+;;   (with-output-to-file (ribs rib-name :if-exists :overwrite)
+;;     (with-slots (width height depth grid cur-idx) game
+;;       (rman:ribegin rib-name)
+;;       (dotimes (k depth)
+;;         (dotimes (j height)
+;;           (dotimes (i width)
+;;             (when (grid-at game i j k)
+;;               (rman:ripoints
+;;                   (clgl:add-filled-quad blocks
+;;                                         (vec4 0.0 0.8 0.0 1.0)
+;;                                         (vec3 i j 0)
+;;                                         (vec3 i (1+ j) 0)
+;;                                         (vec3 (1+ i) (1+ j) 0)
+;;                                         (vec3 (1+ i) j 0))
+;;                   (clgl:add-wire-quad blocks
+;;                                       (vec4 0.0 0.8 0.0 1.0)
+;;                                       (vec3 i j 0)
+;;                                       (vec3 i (1+ j) 0)
+;;                                       (vec3 (1+ i) (1+ j) 0)
+;;                                       (vec3 (1+ i) j 0))))))
+
+;;       (rman:riend))))

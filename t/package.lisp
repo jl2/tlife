@@ -28,8 +28,9 @@
 (in-suite :tlife)
 
 (test spinner
-  (let ((spinner (tlife:create-spinner))
-        (rend (make-instance 'tlife:text-renderer)))
+  (let* ((game (game (make-instance 'tlife:conways-game-of-life :width 5 :height 5 )))
+         (spinner (tlife:create-spinner game 0 0))
+         (rend (make-instance 'tlife:text-renderer)))
     (tlife:render spinner rend)
     (dotimes (s 5)
       (tlife:iterate spinner)
@@ -37,8 +38,9 @@
     (is (equalp spinner (tlife:create-spinner)))))
 
 (test box
-  (let ((box (tlife:create-box))
-        (rend (make-instance 'tlife:text-renderer)))
+  (let* ((game (game (make-instance 'tlife:conways-game-of-life :width 4 :height 4 )))
+         (box (tlife:create-box game 0 0))
+         (rend (make-instance 'tlife:text-renderer)))
     (tlife:render box rend)
     (dotimes (s 4)
       (tlife:iterate box)
@@ -46,8 +48,9 @@
     (is (equalp box (tlife:create-box)))))
 
 (test glider
-  (let ((glider (tlife:create-glider))
-        (rend (make-instance 'tlife:text-renderer)))
+  (let* ((game (make-instance 'tlife:conways-game-of-life :width 6 :height 6 ))
+         (glider (tlife:create-glider game 0 0))
+         (rend (make-instance 'tlife:text-renderer)))
     (tlife:render glider rend)
     (dotimes (s 24)
       (tlife:iterate glider)

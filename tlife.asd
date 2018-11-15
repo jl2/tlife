@@ -21,7 +21,15 @@
   :license  "ISC"
   :version "0.0.1"
   :serial t
-  :depends-on (#:clgl #:alexandria #:cl-glfw3 #:cl-opengl #:bordeaux-threads #:trivial-main-thread #:3d-vectors #:3d-matrices)
+  :depends-on (#:clgl
+               #:alexandria
+               #:cl-glfw3
+               #:cl-opengl
+               #:rman
+               #:bordeaux-threads
+               #:trivial-main-thread
+               #:3d-vectors
+               #:3d-matrices)
   :components (
                (:file "package")
                (:file "tlife")

@@ -28,7 +28,7 @@
   (with-slots (grid height width depth cur-idx) game
     (dotimes (cs steps)
       (declare (ignorable cs))
-      (let ((nl (if (= (1- depth) cur-idx) (1+ depth) 0)))
+      (let ((nl (if (= cur-idx (1- depth)) 0 (1+ cur-idx))))
         (dotimes (j height)
           (dotimes (i width)
             (let ((nc (count-neighbors game i j cur-idx)))
@@ -47,6 +47,7 @@
                      (setf (grid-at game i j nl) nil))))))
         (setf cur-idx nl))))
   game)
+
 (defmethod render ((game toroid-life) (renderer gl-renderer) &key (show nil) (fill nil) &allow-other-keys)
   (with-slots (viewer) renderer
     (let ((blocks (make-instance 'clgl:primitives)))
@@ -54,7 +55,7 @@
         (dotimes (k depth)
           (dotimes (j height)
             (dotimes (i width)
-              (when (grid-at game i j cur-idx)
+              (when (grid-at game i j k)
                 (if fill
                     (clgl:add-filled-quad blocks
                                           (vec4 0.0 0.8 0.0 1.0)
@@ -69,5 +70,6 @@
                                         (vec3 (1+ i) (1+ j) k)
                                         (vec3 (1+ i) j k))))))))
       (clgl:add-object viewer 'life blocks)
-      (when show (clgl:show-viewer viewer nil))
+      (when show
+        (clgl:show-viewer viewer nil))
       viewer)))
