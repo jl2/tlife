@@ -56,19 +56,19 @@
           (dotimes (j height)
             (dotimes (i width)
               (when (grid-at game i j k)
-                (if fill
-                    (clgl:add-filled-quad blocks
-                                          (vec4 0.0 0.8 0.0 1.0)
-                                          (vec3 i j k)
-                                          (vec3 i (1+ j) k)
-                                          (vec3 (1+ i) (1+ j) k)
-                                          (vec3 (1+ i) j k))
-                    (clgl:add-wire-quad blocks
+              (if fill
+                  (clgl:add-filled-quad blocks
                                         (vec4 0.0 0.8 0.0 1.0)
-                                        (vec3 i j k)
-                                        (vec3 i (1+ j) k)
-                                        (vec3 (1+ i) (1+ j) k)
-                                        (vec3 (1+ i) j k))))))))
+                                        (vec3 j i 0)
+                                        (vec3 (1+ j) i 0)
+                                        (vec3 (1+ j) (1+ i) 0)
+                                        (vec3 j (1+ i) 0))
+                  (clgl:add-wire-quad blocks
+                                      (vec4 0.0 0.8 0.0 1.0)
+                                      (vec3 j i 0)
+                                      (vec3 (1+ j) i 0)
+                                      (vec3 (1+ j) (1+ i) 0)
+                                      (vec3 j (1+ i) 0))))))))
       (clgl:add-object viewer 'life blocks)
       (when show
         (clgl:show-viewer viewer nil))

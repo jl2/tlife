@@ -46,17 +46,17 @@
 (declaim (inline grid-at (setf grid-at)))
 (defun grid-at (game i j k)
   (with-slots (grid) game
-    (aref grid i j k)))
+    (aref grid k i j)))
 
 (defun (setf grid-at) (new-value game i j k)
   (with-slots (grid) game
-    (setf (aref grid i j k) new-value)))
+    (setf (aref grid k i j) new-value)))
 
 (defmethod clear ((game game-of-life))
   (with-slots (width height depth grid cur-idx) game
     (setf cur-idx 0)
     (when (not grid)
-      (setf grid (make-array (list width height depth) :element-type 'boolean :initial-element nil)))
+      (setf grid (make-array (list depth width height) :element-type 'boolean :initial-element nil)))
     (dotimes (k depth)
       (dotimes (j height)
         (dotimes (i width)

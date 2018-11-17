@@ -19,13 +19,13 @@
   :description "An interactive library for exploring different versions of Conway's Game of Life."
   :author "Jeremiah LaRocco <jeremiah_larocco@fastmail.com>"
   :license  "ISC"
-  :version "0.0.1"
+  :version "0.0.2"
   :serial t
   :depends-on (#:clgl
                #:alexandria
                #:cl-glfw3
                #:cl-opengl
-               #:rman
+               #:ribgen
                #:bordeaux-threads
                #:trivial-main-thread
                #:3d-vectors
