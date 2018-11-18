@@ -20,6 +20,7 @@
   (:export
    ;; Rendering
    #:render
+   #:renderman-renderer
    #:text-renderer
    #:gl-renderer
    #:2d-gl-renderer

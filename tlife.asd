@@ -33,9 +33,9 @@
   :components (
                (:file "package")
                (:file "tlife")
-               (:file "render")
                (:file "game-of-life")
                (:file "conways-game-of-life")
                (:file "toroid-life")
+               (:file "render")
                )
   :in-order-to ((test-op (test-op tlife.test))))
