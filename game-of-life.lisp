@@ -30,9 +30,6 @@
 (defgeneric initialize (game &key probability &allow-other-keys)
   (:documentation "Render the current game state using the supplied renderer."))
 
-(defgeneric render (game renderer &key &allow-other-keys)
-  (:documentation "Render the current game state using the supplied renderer."))
-
 (defgeneric iterate (game &key steps)
   (:documentation "Advance the game by the specified number of steps."))
 
@@ -73,7 +70,7 @@
 
 (defmethod set-value ((game game-of-life) value &key (i) (j) (k))
   (with-slots (grid cur-idx) game
-    (setf (grid-at game i j k) value))
+    (setf (grid-at game i j (if k k cur-idx)) value))
   game)
 
 (defmethod count-neighbors ((game game-of-life) i j k)
@@ -103,3 +100,4 @@
       (when (grid-at game in  j k) (incf count))
       (when (grid-at game in jn k) (incf count))
       count)))
+

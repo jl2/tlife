@@ -112,4 +112,30 @@
       (when show (clgl:show-viewer viewer nil))
       viewer)))
 
+(defmethod render ((game conways-game-of-life) (renderer renderman-renderer)
+                   &key
+                     (rib-file-name "life.rib")
+                     (tif-file-name "life.tiff")
+                     (frames 120) &allow-other-keys)
+  (with-output-to-file (ribs rib-file-name :if-exists :supersede)
+    (ribgen:begin ribs rib-file-name)
 
+    (dotimes (n frames)
+      (ribgen:frame-begin ribs n)
+      (ribgen:display ribs tif-file-name "tiff" "rgba")
+      (ribgen:world-begin ribs)
+      (with-slots (depth width height grid cur-idx) game
+        (dotimes (j height)
+          (dotimes (i width)
+            (when (grid-at game i j cur-idx)
+              (ribgen:transform-begin ribs)
+              (ribgen:translate ribs j i 0)
+              (ribgen:color ribs 0 255 0)
+              (ribgen:polygon ribs (list "P"
+                                         0 0 0 
+                                         0 1 0
+                                         1 1 0
+                                         1 0 0))
+              (ribgen:transform-end ribs)))))
+      (ribgen:world-end ribs)
+      (ribgen:frame-end ribs))))

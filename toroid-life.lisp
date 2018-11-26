@@ -57,19 +57,57 @@
             (dotimes (i width)
               (when (grid-at game i j k)
               (if fill
-                  (clgl:add-filled-quad blocks
+                  (clgl:add-solid-box blocks
                                         (vec4 0.0 0.8 0.0 1.0)
                                         (vec3 j i k)
                                         (vec3 (1+ j) i k)
                                         (vec3 (1+ j) (1+ i) k)
-                                        (vec3 j (1+ i) k))
-                  (clgl:add-wire-quad blocks
+                                        (vec3 j (1+ i) k)
+
+                                        (vec3 j i (1+ k))
+                                        (vec3 (1+ j) i (1+ k))
+                                        (vec3 (1+ j) (1+ i) (1+ k))
+                                        (vec3 j (1+ i) (1+ k)))
+                  (clgl:add-wire-box blocks
                                       (vec4 0.0 0.8 0.0 1.0)
                                       (vec3 j i k)
                                       (vec3 (1+ j) i k)
                                       (vec3 (1+ j) (1+ i) k)
-                                      (vec3 j (1+ i) k))))))))
+                                      (vec3 j (1+ i) k)
+                                      (vec3 j i (1+ k))
+                                      (vec3 (1+ j) i (1+ k))
+                                      (vec3 (1+ j) (1+ i) (1+ k))
+                                      (vec3 j (1+ i) (1+ k)))))))))
       (clgl:add-object viewer 'life blocks)
       (when show
         (clgl:show-viewer viewer nil))
       viewer)))
+
+(defmethod render ((game toroid-life) (renderer renderman-renderer)
+                   &key
+                     (rib-file-name "life.rib")
+                     (tif-file-name "life.tiff")
+                     (frames 120) &allow-other-keys)
+  (with-output-to-file (ribs rib-file-name :if-exists :supersede)
+    (ribgen:begin ribs rib-file-name)
+
+    (dotimes (n frames)
+      (ribgen:frame-begin ribs n)
+      (ribgen:display ribs tif-file-name "tiff" "rgba")
+      (ribgen:world-begin ribs)
+      (with-slots (depth width height grid cur-idx) game
+        (dotimes (k depth)
+          (dotimes (j height)
+            (dotimes (i width)
+              (when (grid-at game i j k)
+                (ribgen:transform-begin ribs)
+                (ribgen:translate ribs j i k)
+                (ribgen:color ribs 0 255 0)
+                (ribgen:polygon ribs (list "\"P\" ["
+                                           0 0 0 
+                                           0 1 0
+                                           1 1 0
+                                           1 0 0 "]"))
+                (ribgen:transform-end ribs))))))
+      (ribgen:world-end ribs)
+      (ribgen:frame-end ribs))))

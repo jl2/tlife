@@ -35,23 +35,6 @@
 (defclass renderman-renderer (renderer)
   ())
 
-(defmethod render ((game game-of-life) (renderer renderman-renderer)
-                   &key
-                     (rib-name "life.rib")
-                     (tif-name "life.tiff")
-                   &allow-other-keys)
-  (with-output-to-file (ribs rib-name :if-exists :supersede :if-does-not-exist :create)
-    (with-slots (width height depth grid cur-idx) game
-      (ribgen:begin ribs rib-name)
-      (ribgen:display ribs tif-name "tiff" "rgba")
-      (ribgen:world-begin ribs)
-      (dotimes (k depth)
-        (dotimes (j height)
-          (dotimes (i width)
-            (when (grid-at game i j k)
-              (ribgen:transform-begin ribs)
-              (ribgen:translate ribs i j k)
-              (ribgen:sphere ribs  0.5 -0.5 0.5 360)
-              (ribgen:transform-end ribs)))))
-      (ribgen:world-end ribs)
-      (ribgen:end ribs))))
+(defgeneric render (game renderer &key &allow-other-keys)
+  (:documentation "Render the current game state using the supplied renderer."))
+
